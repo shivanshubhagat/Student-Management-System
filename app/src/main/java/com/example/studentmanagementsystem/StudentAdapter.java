@@ -17,7 +17,7 @@ import java.util.ArrayList;
 
 public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.studentViewHolder> {
 
-    ArrayList<Student> studentAdapterArrayList;
+    private ArrayList<Student> studentAdapterArrayList;
     private OnStudentClickListener mListener;
 
     public interface OnStudentClickListener {
@@ -32,6 +32,13 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.studentV
         this.studentAdapterArrayList = studentAdapterArrayList;
     }
 
+
+    public void refreshData(ArrayList<Student> studentAdapterArrayList){
+        this.studentAdapterArrayList = studentAdapterArrayList;
+notifyDataSetChanged();
+
+    }
+
     @NonNull
     @Override
     public studentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int i) {
@@ -42,66 +49,8 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.studentV
 
     @Override
     public void onBindViewHolder(@NonNull final studentViewHolder holder, final int position) {
-        holder.name.setText(studentAdapterArrayList.get(holder.getAdapterPosition()).getStudentName());
-        holder.rollNo.setText(studentAdapterArrayList.get(holder.getAdapterPosition()).getRollNo());
-
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final String[] items = {"View", "Edit", "Delete"};
-
-                AlertDialog.Builder options = new AlertDialog.Builder(holder.context);
-
-                options.setItems(items, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-//                        Toast.makeText(holder.context, items[which], Toast.LENGTH_SHORT).show();
-                        dialog.dismiss();
-
-                        switch (which) {
-                            case 0:
-                                Intent forView = new Intent(holder.context, AddStudentActivity.class);
-                                forView.putExtra("STUDENT_POSITION_VIEW", position);
-                                holder.context.startActivity(forView);
-                                Toast.makeText(holder.context, "View", Toast.LENGTH_SHORT).show();
-
-                                break;
-
-                            case 1:
-                                Intent forEdit = new Intent(holder.context, AddStudentActivity.class);
-                                forEdit.putExtra("STUDENT_POSITION_UPDATE",position);
-                                holder.context.startActivity(forEdit);
-                                Toast.makeText(holder.context, "Edit", Toast.LENGTH_SHORT).show();
-
-                                break;
-                            case 2:
-                                final AlertDialog.Builder deleteDialog = new AlertDialog.Builder(holder.context);
-                                deleteDialog.setMessage("Do you want to delete info of this student ?");
-                                deleteDialog.setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        studentAdapterArrayList.remove(position);
-                                        notifyDataSetChanged();
-                                        Toast.makeText(holder.context, "Deleted", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                                deleteDialog.setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                    }
-                                });
-                                deleteDialog.show();
-                                break;
-                        }
-                    }
-                });
-                AlertDialog mAlert = options.create();
-                mAlert.show();
-            }
-        });
-
-
+        holder.name.setText(studentAdapterArrayList.get(position).getStudentName());
+        holder.rollNo.setText(studentAdapterArrayList.get(position).getRollNo());
     }
 
     @Override
@@ -112,7 +61,7 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.studentV
         return 0;
     }
 
-    public static class studentViewHolder extends RecyclerView.ViewHolder {
+    public class studentViewHolder extends RecyclerView.ViewHolder {
         ImageView imgIcon;
         TextView name;
         TextView rollNo;

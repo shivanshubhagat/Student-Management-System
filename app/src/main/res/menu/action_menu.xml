@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/switchItem"
-        android:actionLayout="@layout/swtich_layout"
+        android:actionLayout="@layout/switch_layout"
         android:title="switch_button_title"
         app:showAsAction="always"></item>
 

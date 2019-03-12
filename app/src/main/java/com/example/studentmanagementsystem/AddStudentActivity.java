@@ -1,15 +1,17 @@
 package com.example.studentmanagementsystem;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import static com.example.studentmanagementsystem.MainActivity.studentArrayList;
+import java.util.ArrayList;
 
 public class AddStudentActivity extends AppCompatActivity {
 
@@ -24,21 +26,21 @@ public class AddStudentActivity extends AppCompatActivity {
         nameEditText = findViewById(R.id.nameEditText);
         rollNoEditText = findViewById(R.id.rollNoEditText);
 
-        if (getIntent().hasExtra("STUDENT_POSITION_VIEW")) {
-            int position = getIntent().getIntExtra("STUDENT_POSITION_VIEW", 0);
-            nameEditText.setText(studentArrayList.get(position).getStudentName());
+        if (getIntent().hasExtra("VIEW")) {
+            Student stu = getIntent().getParcelableExtra("VIEW");
+            nameEditText.setText(stu.getStudentName());
             nameEditText.setEnabled(false);
             nameEditText.setTextColor(Color.parseColor("#000000"));
-            rollNoEditText.setText(studentArrayList.get(position).getRollNo());
+            rollNoEditText.setText(stu.getRollNo());
             rollNoEditText.setEnabled(false);
             rollNoEditText.setTextColor(Color.parseColor("#000000"));
-
             addButton.setVisibility(View.GONE);
-        } else if (getIntent().hasExtra("STUDENT_POSITION_UPDATE")) {
-            int position = getIntent().getIntExtra("STUDENT_POSITION_UPDATE", 0);
-            nameEditText.setText(studentArrayList.get(position).getStudentName());
+
+        } else if (getIntent().hasExtra("UPDATE")) {
+            Student stu = getIntent().getParcelableExtra("UPDATE");
+            nameEditText.setText(stu.getStudentName());
             nameEditText.setEnabled(true);
-            rollNoEditText.setText(studentArrayList.get(position).getRollNo());
+            rollNoEditText.setText(stu.getRollNo());
             rollNoEditText.setEnabled(true);
         }
 
@@ -46,8 +48,11 @@ public class AddStudentActivity extends AppCompatActivity {
 
     public void onClickAddButton(View v)
     {
+        Intent returnIntent = getIntent();
         String name = nameEditText.getText().toString().trim();
         String rollNo = rollNoEditText.getText().toString().trim();
+//        ArrayList<Student> rollNo =
+
 
         if(name.length()==0) {
             nameEditText.requestFocus();
@@ -60,32 +65,27 @@ public class AddStudentActivity extends AppCompatActivity {
         else if (!rollNo.matches("(?:\\b|-)([1-9]{1,2}[0]?|100)\\b")) {
             rollNoEditText.requestFocus();
             rollNoEditText.setError("Roll No can be between 1-100");
-            if (!MainActivity.studentArrayList.isEmpty() )
-            {
-                for (Student holdStudent: MainActivity.studentArrayList) {
-                    if(rollNo.equals(holdStudent.getRollNo()))
-                    {
-                        rollNoEditText.requestFocus();
-                        rollNoEditText.setError("Roll No already Exists");
-                    }
-                }
-            }
         }
 
-        else{
-        if (getIntent().hasExtra("STUDENT_POSITION_UPDATE")) {
-            int position = getIntent().getIntExtra("STUDENT_POSITION_UPDATE", 0);
-            Student studentToUpdate = studentArrayList.get(position);
-            studentToUpdate.setStudentName(name);
-            studentToUpdate.setRollNo(rollNo);
-            Toast toast = Toast.makeText(this, "Student Updated", Toast.LENGTH_LONG);
-        } else {
-            Student stu = new Student(rollNo, name);
-            MainActivity.studentArrayList.add(stu);
-            Toast toast = Toast.makeText(this, "ADDED", Toast.LENGTH_LONG);
-        }
-        MainActivity.studentadapter.notifyDataSetChanged();
+        else {
+
+            if (getIntent().hasExtra("UPDATE"))
+            {
+                Student stu = getIntent().getParcelableExtra("UPDATE");
+                stu.setRollNo(rollNo);
+                stu.setStudentName(name);
+                returnIntent.putExtra("UPDATED_STUDENT",stu);
+                setResult(RESULT_OK,returnIntent);
+                Toast.makeText(this, "Student Updated", Toast.LENGTH_LONG).show();
+            }
+            else if (getIntent().hasExtra("ADDED"))
+            {
+                Student stu = new Student(rollNo, name);
+                returnIntent.putExtra("ADDED_STUDENT",stu);
+                setResult(RESULT_OK,returnIntent);
+                Toast.makeText(this, "Student Added", Toast.LENGTH_LONG).show();
+            }
         finish();
-    }
+        }
     }
 }
