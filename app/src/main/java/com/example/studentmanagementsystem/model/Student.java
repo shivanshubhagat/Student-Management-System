@@ -1,10 +1,7 @@
-package com.example.studentmanagementsystem;
+package com.example.studentmanagementsystem.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-
-import java.io.Serializable;
-import java.util.Scanner;
 
 public class Student implements Parcelable {
     //params
@@ -22,6 +19,7 @@ public class Student implements Parcelable {
         rollNo = in.readString();
         studentName = in.readString();
     }
+
     //Setter and getter
     public void setRollNo(String rollNo) {
         this.rollNo = rollNo;

@@ -1,4 +1,4 @@
-package com.example.studentmanagementsystem;
+package com.example.studentmanagementsystem.activity;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -19,96 +18,107 @@ import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import com.example.studentmanagementsystem.R;
+import com.example.studentmanagementsystem.model.Student;
+import com.example.studentmanagementsystem.adapter.StudentAdapter;
+import com.example.studentmanagementsystem.util.CustomComparator;
+
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+
+import static com.example.studentmanagementsystem.util.Constants.CODE_TO_ADD_STUDENT;
+import static com.example.studentmanagementsystem.util.Constants.CODE_TO_UPDATE_STUDENT;
+import static com.example.studentmanagementsystem.util.Constants.CODE_TO_VIEW_STUDENT;
+import static com.example.studentmanagementsystem.util.Constants.DELETE;
+import static com.example.studentmanagementsystem.util.Constants.ITEMS;
+import static com.example.studentmanagementsystem.util.Constants.UPDATE;
+import static com.example.studentmanagementsystem.util.Constants.VIEW;
 
 public class
-MainActivity extends AppCompatActivity {
+ShowActivity extends AppCompatActivity {
 
-    private StudentAdapter studentadapter;
+    private StudentAdapter studentAdapter;
     private ArrayList<Student> studentArrayList;
-    private int thisposition;
-    RecyclerView studentList;
-    Button btnadd;
-    private static final int ADD_STUDENT_CODE = 12,
-            CODE_TO_VIEW_STUDENT = 101, CODE_TO_UPDATE_STUDENT = 102;
+    private int thisPosition;
+    RecyclerView rvStudent;
+    Button btnAdd;
 
-    public void setThisposition(int thisposition) {
-        this.thisposition = thisposition;
+    //getting and storing position of student to be used further
+    public void setThisPosition(int thisPosition) {
+        this.thisPosition = thisPosition;
     }
 
-    public int getThisposition() {
-        return thisposition;
+    public int getThisPosition() {
+        return thisPosition;
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        studentArrayList = new ArrayList<Student>();
+        studentArrayList = new ArrayList<>();
         setContentView(R.layout.activity_main);
 
-        studentList = (RecyclerView) findViewById(R.id.studentlist);
-        btnadd = findViewById(R.id.addButton);
+        rvStudent = findViewById(R.id.studentlist);
+        btnAdd = findViewById(R.id.addButton);
 
-        studentList.setLayoutManager(new LinearLayoutManager(this));
-        studentadapter = new StudentAdapter(this.studentArrayList);
-        studentList.setAdapter(studentadapter);
+        rvStudent.setLayoutManager(new LinearLayoutManager(this));
+        studentAdapter = new StudentAdapter(this.studentArrayList);
+        rvStudent.setAdapter(studentAdapter);
 
-        btnadd.setOnClickListener(new View.OnClickListener() {
+        btnAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, AddStudentActivity.class);
+                Intent intent = new Intent(ShowActivity.this, AddStudentActivity.class);
                 intent.putExtra("ADDED", 111);
-//                if(!studentArrayList.isEmpty())
-//                {
-//                    intent.putExtra("ARRAY_LIST",studentArrayList);
-//                }
-                startActivityForResult(intent, ADD_STUDENT_CODE);
+                if (studentArrayList.size() > 0) {
+                    intent.putParcelableArrayListExtra("ARRAY_LIST", studentArrayList);
+                }
+                startActivityForResult(intent, CODE_TO_ADD_STUDENT);
             }
         });
 
-        final StudentAdapter studentAdapter = new StudentAdapter(this.studentArrayList);
-        studentList.setAdapter(studentAdapter);
+//        final StudentAdapter studentAdapter = new StudentAdapter(this.studentArrayList);
+//        rvStudent.setAdapter(studentAdapter);
         studentAdapter.setOnStudentClickListener(new StudentAdapter.OnStudentClickListener() {
             @Override
             public void onStudentClick(final int position) {
 
-                final String[] items = {"View", "Edit", "Delete"};
-                final int view = 0, update = 1, delete = 2;
-                android.app.AlertDialog.Builder options = new android.app.AlertDialog.Builder(MainActivity.this);
-                options.setItems(items, new DialogInterface.OnClickListener() {
+                android.app.AlertDialog.Builder options = new android.app.AlertDialog.Builder(ShowActivity.this);
+                options.setItems(ITEMS, new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         Student stu = studentArrayList.get(position);
-                        setThisposition(position);
+                        setThisPosition(position);
 
                         switch (which) {
-                            case view:
-                                Intent forView = new Intent(MainActivity.this, AddStudentActivity.class);
+                            //VIEW CASE
+                            case VIEW:
+                                Intent forView = new Intent(ShowActivity.this, AddStudentActivity.class);
                                 forView.putExtra("VIEW", stu);
                                 startActivityForResult(forView, CODE_TO_VIEW_STUDENT);
-                                Toast.makeText(MainActivity.this, "View", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(ShowActivity.this, "View", Toast.LENGTH_SHORT).show();
                                 break;
 
-                            case update:
-                                Intent forEdit = new Intent(MainActivity.this, AddStudentActivity.class);
+                            //UPDATE CASE
+                            case UPDATE:
+                                Intent forEdit = new Intent(ShowActivity.this, AddStudentActivity.class);
                                 forEdit.putExtra("UPDATE", stu);
                                 startActivityForResult(forEdit, CODE_TO_UPDATE_STUDENT);
-                                Toast.makeText(MainActivity.this, "Edit", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(ShowActivity.this, "Edit", Toast.LENGTH_SHORT).show();
                                 break;
 
-                            case delete:
-                                final android.app.AlertDialog.Builder deleteDialog = new android.app.AlertDialog.Builder(MainActivity.this);
+                            //DELETE CASE
+                            case DELETE:
+                                final android.app.AlertDialog.Builder deleteDialog = new android.app.AlertDialog.Builder(ShowActivity.this);
                                 deleteDialog.setMessage("Do you want to delete info of this student ?");
                                 deleteDialog.setPositiveButton("YES", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         studentArrayList.remove(position);
                                         studentAdapter.notifyDataSetChanged();
-                                        Toast.makeText(MainActivity.this, "Deleted", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(ShowActivity.this, "Deleted", Toast.LENGTH_SHORT).show();
                                     }
                                 });
                                 deleteDialog.setNegativeButton("NO", new DialogInterface.OnClickListener() {
@@ -133,19 +143,21 @@ MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == ADD_STUDENT_CODE && resultCode == RESULT_OK) {
+        //CODE TO ADD STUDENT
+        if (requestCode == CODE_TO_ADD_STUDENT && resultCode == RESULT_OK) {
             Student s = data.getParcelableExtra("ADDED_STUDENT");
             studentArrayList.add(s);
-            studentadapter.notifyDataSetChanged();
+            studentAdapter.notifyDataSetChanged();
+        }
 
-        } else if (requestCode == CODE_TO_UPDATE_STUDENT && resultCode == RESULT_OK) {
-            int position = getThisposition();
-            Student studentToAdd = data.getParcelableExtra("UPDATE");
-//            studentArrayList.remove(position);
-//            studentArrayList.add(position,studentToAdd);
-            studentArrayList.get(position).setRollNo(studentToAdd.getRollNo());
-            studentArrayList.get(position).setStudentName(studentToAdd.getStudentName());
-            studentadapter.refreshData(studentArrayList);
+        //CODE TO UPDATE STUDENT
+        else if (requestCode == CODE_TO_UPDATE_STUDENT && resultCode == RESULT_OK) {
+            int position = getThisPosition();
+            Student studentToAdd = data.getParcelableExtra("UPDATED_STUDENT");
+            Student student = new Student(studentToAdd.getRollNo(), studentToAdd.getStudentName());
+            studentArrayList.remove(position);
+            studentArrayList.add(position, student);
+            studentAdapter.notifyDataSetChanged();
         }
     }
 
@@ -159,22 +171,24 @@ MainActivity extends AppCompatActivity {
         MenuItem sortByNameItem = menu.findItem(R.id.sortByName);
         MenuItem sortByRollNoItem = menu.findItem(R.id.sortByRollNo);
 
+        //SORT BY NAME
         sortByNameItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Collections.sort(studentArrayList, new SortByName());
-                studentadapter.notifyDataSetChanged();
-                Toast.makeText(MainActivity.this, "Sorted by Name", Toast.LENGTH_SHORT).show();
+                Collections.sort(studentArrayList, new CustomComparator.SortByName());
+                studentAdapter.notifyDataSetChanged();
+                Toast.makeText(ShowActivity.this, "Sorted by Name", Toast.LENGTH_SHORT).show();
                 return true;
             }
         });
 
+        //SORT BY ROLL NO
         sortByRollNoItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Collections.sort(studentArrayList, new SortByRollNo());
-                studentadapter.notifyDataSetChanged();
-                Toast.makeText(MainActivity.this, "Sorted by RollNo", Toast.LENGTH_SHORT).show();
+                Collections.sort(studentArrayList, new CustomComparator.SortByRollNo());
+                studentAdapter.notifyDataSetChanged();
+                Toast.makeText(ShowActivity.this, "Sorted by RollNo", Toast.LENGTH_SHORT).show();
                 return true;
             }
         });
@@ -187,32 +201,14 @@ MainActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    studentList.setLayoutManager(new GridLayoutManager(MainActivity.this, 2));
+                    rvStudent.setLayoutManager(new GridLayoutManager(ShowActivity.this, 2));
                 } else {
-                    studentList.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+                    rvStudent.setLayoutManager(new LinearLayoutManager(ShowActivity.this));
                 }
             }
         });
 
         return super.onCreateOptionsMenu(menu);
 
-    }
-
-    //MENU COMPARATORS
-
-    public class SortByName implements Comparator<Student> {
-
-        @Override
-        public int compare(Student o1, Student o2) {
-            return (o1.getStudentName().compareTo(o2.getStudentName()));
-        }
-    }
-
-    public class SortByRollNo implements Comparator<Student> {
-
-        @Override
-        public int compare(Student o1, Student o2) {
-            return (o1.getRollNo().compareTo(o2.getRollNo()));
-        }
     }
 }
