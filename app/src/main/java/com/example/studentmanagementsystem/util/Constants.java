@@ -16,4 +16,11 @@ public class Constants {
     //regex codes
     public static final String VALID_NAME ="\\b[a-zA-Z]+\\s[a-zA-Z]+\\b";
     public static final String VALID_ROLL_NO="(?:\\b|-)([1-9]{1,2}[0]?|100)\\b";
+
+    //DATABASE
+    public static final int DATABASE_VERSION = 1;
+    public static final String DATABASE_NAME = "studentDatabase.db";
+    public static final String TABLE_STUDENT = "students";
+    public static final String COLUMN_ROLL_NO = "rollNo";
+    public static final String COLUMN_STUDENT_NAME = "name";
 }

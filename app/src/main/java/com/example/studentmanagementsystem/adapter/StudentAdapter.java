@@ -81,6 +81,12 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.studentV
                     }
                 }
             });
+            name.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+
+                }
+            });
         }
     }
 }
