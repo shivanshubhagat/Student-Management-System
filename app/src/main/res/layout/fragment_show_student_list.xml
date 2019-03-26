@@ -6,7 +6,7 @@
     android:weightSum="1">
 
     <android.support.v7.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/studentlist"
+        android:id="@+id/rv_student_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1">

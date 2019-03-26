@@ -1,6 +1,5 @@
 package com.example.studentmanagementsystem.adapter;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -14,13 +13,13 @@ import com.example.studentmanagementsystem.model.Student;
 
 import java.util.ArrayList;
 
-public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.studentViewHolder> {
+public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.studentViewHolder> {
 
     //arraylist for student adapter
     private ArrayList<Student> studentAdapterArrayList;
     private OnStudentClickListener mListener;
 
-    //after clicking on student in ShowActivity
+    //after clicking on student in ShowStudentListActivity
     public interface OnStudentClickListener {
         void onStudentClick(int position);
     }
@@ -31,7 +30,7 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.studentV
     }
 
     //assigning arraylist
-    public StudentAdapter(ArrayList<Student> studentAdapterArrayList) {
+    public RecyclerViewAdapter(ArrayList<Student> studentAdapterArrayList) {
         this.studentAdapterArrayList = studentAdapterArrayList;
     }
 
@@ -58,13 +57,13 @@ public class StudentAdapter extends RecyclerView.Adapter<StudentAdapter.studentV
     }
 
     //student view holder class
-    public class studentViewHolder extends RecyclerView.ViewHolder {
+    class studentViewHolder extends RecyclerView.ViewHolder {
         ImageView imgIcon;
         TextView name;
         TextView rollNo;
 
         //constructor which onClick method listens to position
-        public studentViewHolder(@NonNull View itemView, final OnStudentClickListener listener) {
+        studentViewHolder(@NonNull View itemView, final OnStudentClickListener listener) {
             super(itemView);
             imgIcon = itemView.findViewById(R.id.img_icon);
             name = itemView.findViewById(R.id.name);
