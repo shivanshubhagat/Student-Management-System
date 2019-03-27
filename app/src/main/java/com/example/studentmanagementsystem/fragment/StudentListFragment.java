@@ -6,8 +6,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -26,24 +24,24 @@ import com.example.studentmanagementsystem.model.Student;
 import com.example.studentmanagementsystem.util.CommunicationFragments;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 
-import static android.support.constraint.Constraints.TAG;
 import static com.example.studentmanagementsystem.util.Constants.DELETE;
+import static com.example.studentmanagementsystem.util.Constants.DELETE_CASE;
 import static com.example.studentmanagementsystem.util.Constants.OPTIONS;
 import static com.example.studentmanagementsystem.util.Constants.UPDATE;
+import static com.example.studentmanagementsystem.util.Constants.UPDATE_CASE;
 import static com.example.studentmanagementsystem.util.Constants.VIEW;
+import static com.example.studentmanagementsystem.util.Constants.VIEW_CASE;
 
-public class StudentListFragment extends Fragment implements RecyclerViewAdapter.OnStudentClickListener {
+public class StudentListFragment extends Fragment implements RecyclerViewAdapter.OnStudentClickListener{
 
     private Context mContext;
-    private CommunicationFragments mListener;
+    private CommunicationFragments communicationFragmentsListener;
+    private RecyclerView rvStudent;
     private RecyclerViewAdapter recyclerViewAdapter;
     private ArrayList<Student> studentArrayList;
+    private Button btnAdd;
     private int thisPosition;
-    RecyclerView rvStudent;
-    Button btnAdd;
     protected DatabaseHelper databaseHelper;
 
     public StudentListFragment() {
@@ -70,37 +68,110 @@ public class StudentListFragment extends Fragment implements RecyclerViewAdapter
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_show_student_list, container, false);
 
+        //populate recycler view
         rvStudent = view.findViewById(R.id.rv_student_list);
+        databaseHelper = new DatabaseHelper(mContext);
+        studentArrayList = databaseHelper.getStudentsFromDB();
         recyclerViewAdapter = new RecyclerViewAdapter(this.studentArrayList);
         rvStudent.setLayoutManager(new LinearLayoutManager(mContext));
         rvStudent.setAdapter(recyclerViewAdapter);
         recyclerViewAdapter.notifyDataSetChanged();
 
-        databaseHelper = new DatabaseHelper(mContext);
-        studentArrayList = databaseHelper.getStudentsFromDB();
-        rvStudent = view.findViewById(R.id.rv_student_list);
-
+        //add button on activity will change tab
         btnAdd = view.findViewById(R.id.addButton);
         btnAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ShowStudentListActivity obj = new ShowStudentListActivity();
-                obj.onChangeTab();
+                Bundle bundle = new Bundle();
+                bundle.putParcelableArrayList("student Array list",studentArrayList);
+                bundle.putString("Add","Add");
+                communicationFragmentsListener.communicateAdd(bundle);
             }
         });
+        handleRecyclerClick();
         return view;
+
+    }
+
+    public void handleRecyclerClick() {
+        recyclerViewAdapter.setOnStudentClickListener(new RecyclerViewAdapter.OnStudentClickListener() {
+            @Override
+            public void onStudentClick(final int position) {
+
+                AlertDialog.Builder options = new AlertDialog.Builder(mContext);
+                options.setItems(OPTIONS, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        final Student stu = studentArrayList.get(position);
+                        setThisPosition(position);
+
+                        switch (which) {
+                            //VIEW_CASE CASE
+                            case VIEW_CASE:
+                                Intent intentView = new Intent(mContext, ViewStudentActivity.class);
+                                intentView.putExtra(VIEW, stu);
+                                Toast.makeText(mContext, VIEW, Toast.LENGTH_SHORT).show();
+                                startActivity(intentView);
+                                break;
+
+                            //UPDATE_CASE CASE
+                            case UPDATE_CASE:
+                                Bundle bundle = new Bundle();
+                                bundle.putParcelable("Student",stu);
+                                bundle.putString("Update", "Update");
+                                communicationFragmentsListener.communicateUpdate(bundle);
+                                break;
+
+                            //DELETE CASE
+                            case DELETE_CASE:
+                                final AlertDialog.Builder deleteDialog = new AlertDialog.Builder(mContext);
+                                deleteDialog.setMessage("Do you want to delete info of this student ?");
+                                deleteDialog.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        databaseHelper.deleteStudentFromDB(stu.getRollNo());
+                                        studentArrayList.remove(position);
+                                        recyclerViewAdapter.notifyDataSetChanged();
+                                        Toast.makeText(mContext, "Deleted", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                                deleteDialog.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                });
+                                deleteDialog.show();
+                                break;
+                        }
+                    }
+                });
+                AlertDialog mAlert = options.create();
+                mAlert.show();
+
+            }
+        });
     }
 
     @Override
-    public void onStudentClick(int position) {
-
+    public void onStudentClick(final int position) {
     }
+
+    //getting and storing position of student to be used further
+    public void setThisPosition(int thisPosition) {
+        this.thisPosition = thisPosition;
+    }
+    public int getThisPosition() {
+        return thisPosition;
+    }
+
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         if (context instanceof CommunicationFragments) {
-            mListener = (CommunicationFragments) context;
+            communicationFragmentsListener = (CommunicationFragments) context;
         } else {
             throw new RuntimeException(context.toString()
                     + " must implement OnFragmentInteractionListener");
@@ -110,99 +181,47 @@ public class StudentListFragment extends Fragment implements RecyclerViewAdapter
     @Override
     public void onDetach() {
         super.onDetach();
-        mListener = null;
+        communicationFragmentsListener = null;
     }
 
-}
-/////////////////////////////////////////////////////////////////////////////////////////////
-//    public interface OnFragmentInteractionListener {
-//        // TODO: Update argument type and name
-//
-//        /**
-//         * Method delete student from the database
-//         *
-//         * @param student
-//         * @return true is successfully deleted
-//         */
-//        boolean onStudentDelete(Student student);
-//
-//        /**
-//         * Method fetches data from the database and pass them in the adapter
-//         *
-//         * @return List of students from database
-//         */
-//        ArrayList<Student> onRefreshStudentList();
-//
-//        /**
-//         * Method change the fragment to another fragment and call method in that fragment
-//         * used for communication in fragments to pass editData
-//         *
-//         * @param intent
-//         */
-//        void onEditData(Intent intent);
-//
-//        /**
-//         * Method change the fragment to another fragment and call method in that fragment
-//         * used for communication in fragments to pass addData
-//         *
-//         * @param intent
-//         */
-//        void onAddData(Intent intent);
-//    }
 
-//    @Override
-//    public void onStudentClick(final int position) {
-//
-//        AlertDialog.Builder options = new AlertDialog.Builder(mContext);
-//        options.setItems(OPTIONS, new DialogInterface.OnClickListener() {
-//
-//            @Override
-//            public void onClick(DialogInterface dialog, int which) {
-//                final Student stu = studentArrayList.get(position);
-//                setThisPosition(position);
-//
-//                switch (which) {
-//                    //VIEW CASE
-//                    case VIEW:
-//                        Intent intentView = new Intent(mContext, ViewStudentActivity.class);
-//                        intentView.putExtra("VIEW", stu);
-//                        Toast.makeText(mContext, "View", Toast.LENGTH_SHORT).show();
-//                        break;
-//
-//                    //UPDATE CASE
-//                    case UPDATE:
-//                        Intent intentEdit = new Intent(mContext, ViewStudentActivity.class);
-//                        intentEdit.putExtra("UPDATE", stu);
-//                        Toast.makeText(mContext, "Edit", Toast.LENGTH_SHORT).show();
-//                        break;
-//
-//                    //DELETE CASE
-//                    case DELETE:
-//                        final AlertDialog.Builder deleteDialog = new AlertDialog.Builder(mContext);
-//                        deleteDialog.setMessage("Do you want to delete info of this student ?");
-//                        deleteDialog.setPositiveButton("YES", new DialogInterface.OnClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialog, int which) {
-//                                databaseHelper.deleteStudentFromDB(stu.getRollNo());
-//                                studentArrayList.remove(position);
-//                                recyclerViewAdapter.notifyDataSetChanged();
-//                                Toast.makeText(mContext, "Deleted", Toast.LENGTH_SHORT).show();
-//                            }
-//                        });
-//                        deleteDialog.setNegativeButton("NO", new DialogInterface.OnClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialog, int which) {
-//                                dialog.dismiss();
-//                            }
-//                        });
-//                        deleteDialog.show();
-//                        break;
-//                }
-//            }
-//        });
-//        AlertDialog mAlert = options.create();
-//        mAlert.show();
-//    }
+    public interface OnFragmentInteractionListener {
+        // TODO: Update argument type and name
+
+        /**
+         * Method delete student from the database
+         *
+         * @param student
+         * @return true is successfully deleted
+         */
+        boolean onStudentDelete(Student student);
+
+        /**
+         * Method fetches data from the database and pass them in the adapter
+         *
+         * @return List of students from database
+         */
+        ArrayList<Student> onRefreshStudentList();
+
+        /**
+         * Method change the fragment to another fragment and call method in that fragment
+         * used for communication in fragments to pass editData
+         *
+         * @param intent
+         */
+        void onEditData(Intent intent);
+
+        /**
+         * Method change the fragment to another fragment and call method in that fragment
+         * used for communication in fragments to pass addData
+         *
+         * @param intent
+         */
+        void onAddData(Intent intent);
+    }
+}
+
+
 
 //    private void sortByName() {
 //        Collections.sort(studentArrayList, new Comparator<Student>() {
@@ -225,13 +244,7 @@ public class StudentListFragment extends Fragment implements RecyclerViewAdapter
 //        recyclerViewAdapter.notifyDataSetChanged();
 //    }
 //
-//    //getting and storing position of student to be used further
-//    public void setThisPosition(int thisPosition) {
-//        this.thisPosition = thisPosition;
-//    }
-//    public int getThisPosition() {
-//        return thisPosition;
-//    }
+
 
 
 

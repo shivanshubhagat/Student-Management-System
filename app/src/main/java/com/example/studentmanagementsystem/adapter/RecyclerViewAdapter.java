@@ -17,16 +17,11 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     //arraylist for student adapter
     private ArrayList<Student> studentAdapterArrayList;
-    private OnStudentClickListener mListener;
-
-    //after clicking on student in ShowStudentListActivity
-    public interface OnStudentClickListener {
-        void onStudentClick(int position);
-    }
+    private OnStudentClickListener onStudentClickListener;
 
     //setting listener from clicked student
     public void setOnStudentClickListener(OnStudentClickListener listener) {
-        mListener = listener;
+        onStudentClickListener = listener;
     }
 
     //assigning arraylist
@@ -39,7 +34,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     public studentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int i) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.student_layout, parent, false);
-        return new studentViewHolder(view, mListener);
+        return new studentViewHolder(view, onStudentClickListener);
     }
 
     @Override
@@ -56,6 +51,10 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         return 0;
     }
 
+    //after clicking on student in ShowStudentListActivity
+    public interface OnStudentClickListener {
+        void onStudentClick(int position);
+    }
     //student view holder class
     class studentViewHolder extends RecyclerView.ViewHolder {
         ImageView imgIcon;
@@ -80,12 +79,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
                     }
                 }
             });
-            name.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
 
-                }
-            });
         }
     }
 }

@@ -2,11 +2,11 @@ package com.example.studentmanagementsystem.activity;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.support.design.widget.TabLayout;
 
 import com.example.studentmanagementsystem.R;
 import com.example.studentmanagementsystem.adapter.PagerAdapter;
@@ -18,10 +18,13 @@ import com.example.studentmanagementsystem.util.CommunicationFragments;
 
 import java.util.ArrayList;
 
+
 import static com.example.studentmanagementsystem.util.Constants.ADD_STUDENT_CODE;
 import static com.example.studentmanagementsystem.util.Constants.SHOW_STUDENT_CODE;
 
-public class ShowStudentListActivity extends AppCompatActivity implements CommunicationFragments {
+
+public class ShowStudentListActivity extends AppCompatActivity implements CommunicationFragments
+{
 
     // private RecyclerViewAdapter recyclerViewAdapter;
     private ArrayList<Student> studentArrayList;
@@ -29,6 +32,7 @@ public class ShowStudentListActivity extends AppCompatActivity implements Commun
     private ViewPager mViewPager;
     protected DatabaseHelper databaseHelper;
     PagerAdapter mPagerAdapter;
+
 
     @Override //done
     public void onCreate(Bundle savedInstanceState) {
@@ -43,17 +47,12 @@ public class ShowStudentListActivity extends AppCompatActivity implements Commun
         tabLayout.setupWithViewPager(mViewPager);
     }
 
-    public void onChangeTab() {
-        Log.d("aaaaaa", "position: " );
+    public void changeTab() {
         if (mViewPager.getCurrentItem() == 0) {
-
-            Log.d("aaaaaa", "1 chla");
             mViewPager.setCurrentItem(1);
         }
 
         else if (mViewPager.getCurrentItem() == 1) {
-
-            Log.d("aaaaaa", "2 chla");
             mViewPager.setCurrentItem(0);
         }
     }
@@ -88,10 +87,25 @@ public class ShowStudentListActivity extends AppCompatActivity implements Commun
     }
 
     @Override
-    public void communication(Bundle bundle) {
+    public void communicateAdd(Bundle bundle) {
+        String tag = "android:switcher:" + R.id.view_pager_show_student + ":" + ADD_STUDENT_CODE;
+//        ViewStudentFragment addStudentFragment = (ViewStudentFragment) getSupportFragmentManager().findFragmentByTag(tag);
+//        addStudentFragment.addStudent(bundle);
+        changeTab();
+    }
 
+    @Override
+    public void communicateUpdate(Bundle bundle) {
+        String tag = "android:switcher:" + R.id.view_pager_show_student + ":" + ADD_STUDENT_CODE;
+        ViewStudentFragment updateStudentFragment = (ViewStudentFragment) getSupportFragmentManager().getFragments().get(1);
+        if (updateStudentFragment != null)
+        {
+            updateStudentFragment.updateStudent(bundle);
+            changeTab();
+        }
     }
 }
+
 
         /*
         rvStudent = findViewById(R.id.studentlist);
@@ -122,18 +136,18 @@ public class ShowStudentListActivity extends AppCompatActivity implements Commun
                         setThisPosition(position);
 
                         switch (which) {
-                            //VIEW CASE
-                            case VIEW:
+                            //VIEW_CASE CASE
+                            case VIEW_CASE:
                                 Intent intentView = new Intent(ShowStudentListActivity.this, ViewStudentActivity.class);
-                                intentView.putExtra("VIEW", stu);
+                                intentView.putExtra("VIEW_CASE", stu);
                                 startActivityForResult(intentView, CODE_TO_VIEW_STUDENT);
                                 Toast.makeText(ShowStudentListActivity.this, "View", Toast.LENGTH_SHORT).show();
                                 break;
 
-                            //UPDATE CASE
-                            case UPDATE:
+                            //UPDATE_CASE CASE
+                            case UPDATE_CASE:
                                 Intent intentEdit = new Intent(ShowStudentListActivity.this, ViewStudentActivity.class);
-                                intentEdit.putExtra("UPDATE", stu);
+                                intentEdit.putExtra("UPDATE_CASE", stu);
                                 startActivityForResult(intentEdit, CODE_TO_UPDATE_STUDENT);
                                 Toast.makeText(ShowStudentListActivity.this, "Edit", Toast.LENGTH_SHORT).show();
                                 break;
@@ -183,7 +197,7 @@ public class ShowStudentListActivity extends AppCompatActivity implements Commun
             recyclerViewAdapter.notifyDataSetChanged();
         }
 
-        //CODE TO UPDATE STUDENT
+        //CODE TO UPDATE_CASE STUDENT
         else if (requestCode == CODE_TO_UPDATE_STUDENT && resultCode == RESULT_OK) {
             int position = getThisPosition();
             studentArrayList.remove(position);

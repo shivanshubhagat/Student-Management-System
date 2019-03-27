@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,13 +32,13 @@ import static com.example.studentmanagementsystem.util.Constants.USE_ASYNC_TASK;
 import static com.example.studentmanagementsystem.util.Constants.USE_INTENT_SERVICE;
 import static com.example.studentmanagementsystem.util.Constants.USE_SERVICE;
 
-public class ViewStudentFragment extends Fragment {
+public class ViewStudentFragment extends Fragment implements CommunicationFragments {
 
     Context mContext;
     DatabaseHelper databaseHelper;
     View view;
     Button btnAdd;
-    EditText editTextName, editTextRollNo;
+    private EditText editTextName, editTextRollNo;
     private boolean errorHandling;
     private int selectButtonOperation = 2;
     private ArrayList<Student> studentList = new ArrayList<>();
@@ -45,38 +46,16 @@ public class ViewStudentFragment extends Fragment {
     public final static String[] ITEM_DAILOG = {"AsyncTask", "Service", "Intent Service"};
     private int select;
     private CommunicationFragments mListener;
+    private StudentListFragment.OnFragmentInteractionListener onFragmentInteractionListener;
 
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
 
     public ViewStudentFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment ViewStudentFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static ViewStudentFragment newInstance(String param1, String param2) {
-        ViewStudentFragment fragment = new ViewStudentFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -141,6 +120,51 @@ public class ViewStudentFragment extends Fragment {
         }
     }
 
+    public void viewStudent(Student student){
+        editTextName.setText(student.getStudentName());
+        editTextRollNo.setText(student.getRollNo());
+        editTextRollNo.setEnabled(false);
+        editTextName.setEnabled(false);
+        btnAdd.setVisibility(View.GONE);
+    }
+
+    public void updateStudent(Bundle bundle){
+
+        if(bundle.getString("Update").equals("Update")) {
+
+            Student student = bundle.getParcelable("Student");
+            String oldIdOfStudent = student.getRollNo();
+            editTextName.setText(student.getStudentName());
+            editTextRollNo.setText(student.getRollNo());
+
+            editMode(oldIdOfStudent,student);
+
+        }else if(bundle.getString("Add").equals("Add")){
+            studentList=bundle.getParcelableArrayList("student Array list");
+            addButtonOnClick();
+        }
+    }
+
+    public void editMode(String oldIdOfStudent, Student student) {
+        final String oldRollNo = oldIdOfStudent;
+        getActivity().setTitle("Edit Student");
+
+        btnAdd.findViewById(R.id.addButton);
+        btnAdd.setText("Update Student");
+        //to return name and roll number through bundle to StudentList Fragment and update data using preferred operation
+        btnAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Bundle bundle= new Bundle();
+                String name = editTextName.getText().toString().trim();
+                String roll = editTextRollNo.getText().toString().trim();
+                Student student = new Student(name,roll);
+                bundle.putString("Update","Update");
+                bundle.putParcelable("Student",student);
+                generateAlertDialog(student,"Update",oldRollNo);
+            }
+        });
+    }
 
     private void generateAlertDialog(final Student studentToHandle, final String operationOnStudent,final String oldIdOfStudent) {
         final AlertDialog.Builder mBuilder = new AlertDialog.Builder(mContext);
@@ -182,13 +206,12 @@ public class ViewStudentFragment extends Fragment {
                         backgroundAsyncTasks.execute(studentToHandle, operationOnStudent);
                         break;
                 }
-                mListener.communication(bundle);
+                mListener.communicateUpdate(bundle);
             }
         });
         AlertDialog mDialog = mBuilder.create();
         mDialog.show();
     }
-
 
     private void editButtonOnClick() {
         String Name = editTextName.getText().toString().trim();
@@ -212,12 +235,6 @@ public class ViewStudentFragment extends Fragment {
         btnAdd = view.findViewById(R.id.saveButton);
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-//    public void onButtonPressed(Uri uri) {
-//        if (mListener != null) {
-//            mListener.onFragmentInteraction(uri);
-//        }
-//    }
 
     @Override
     public void onAttach(Context context) {
@@ -237,4 +254,13 @@ public class ViewStudentFragment extends Fragment {
     }
 
 
+    @Override
+    public void communicateAdd(Bundle bundle) {
+
+    }
+
+    @Override
+    public void communicateUpdate(Bundle bundle) {
+
+    }
 }

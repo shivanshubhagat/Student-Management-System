@@ -9,6 +9,9 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -19,55 +22,50 @@ import com.example.studentmanagementsystem.fragment.ViewStudentFragment;
 import com.example.studentmanagementsystem.model.Student;
 import com.example.studentmanagementsystem.util.CommunicationFragments;
 
+import static com.example.studentmanagementsystem.util.Constants.VIEW;
+
 public class ViewStudentActivity extends AppCompatActivity implements CommunicationFragments {
 
-    private Button buttonAddStudent;
-    private EditText editTextName, editTextRollNo;
+    ViewStudentFragment viewStudentFragment;
+    Student student;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_student);
 
+        student= getIntent().getParcelableExtra(VIEW);
 
-
-
-        buttonAddStudent = findViewById(R.id.saveButton);
-        editTextName = findViewById(R.id.nameEditText);
-        editTextRollNo = findViewById(R.id.rollNoEditText);
-        editTextName.setFocusable(true);
-
-
-        if (getIntent().getExtras() != null) {
-            Student stu = getIntent().getParcelableExtra("VIEW");
-
-            editTextName.setText(stu.getStudentName());
-            editTextRollNo.setText(stu.getRollNo());
-
-            editTextName.setTextColor(Color.BLACK);
-            editTextRollNo.setTextColor(Color.BLACK);
-
-            editTextName.setEnabled(false);
-            editTextRollNo.setEnabled(false);
-
-            editTextName.setFocusable(false);
-            editTextRollNo.setFocusable(false);
-
-            buttonAddStudent.setVisibility(View.GONE);
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        viewStudentFragment = new ViewStudentFragment();
+        fragmentTransaction.add(R.id.frag_view,viewStudentFragment);
+        fragmentTransaction.commit();
 
         }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        viewStudentFragment.viewStudent(student);
+    }
+
+
+    @Override
+    public void communicateAdd(Bundle bundle) {
+
     }
 
     @Override
-    public void communication(Bundle bundle) {
+    public void communicateUpdate(Bundle bundle) {
 
     }
 }
 
 
 
-        /*else if (getIntent().hasExtra("UPDATE")) {
-            Student stu = getIntent().getParcelableExtra("UPDATE");
+        /*else if (getIntent().hasExtra("UPDATE_CASE")) {
+            Student stu = getIntent().getParcelableExtra("UPDATE_CASE");
 
             editTextName.setEnabled(true);
             editTextRollNo.setEnabled(true);
@@ -109,8 +107,8 @@ public class ViewStudentActivity extends AppCompatActivity implements Communicat
             }
         } else {
             Intent returnIntent = getIntent();
-            if (returnIntent.hasExtra("UPDATE")) {
-                Student studentToUpdate = returnIntent.getParcelableExtra("UPDATE");
+            if (returnIntent.hasExtra("UPDATE_CASE")) {
+                Student studentToUpdate = returnIntent.getParcelableExtra("UPDATE_CASE");
                 int oldRollNo = Integer.parseInt(studentToUpdate.getRollNo());
                 if (!databaseHelper.rollNoExistsEdit(Integer.parseInt(String.valueOf(rollNo)), oldRollNo)) {
                     studentToUpdate.setRollNo(rollNo);

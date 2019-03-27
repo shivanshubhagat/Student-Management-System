@@ -2,11 +2,14 @@ package com.example.studentmanagementsystem.util;
 
 public class Constants {
     //constants for dialogue switch on Show Students Activity
-    public final static int VIEW = 0;
-    public final static int UPDATE = 1;
-    public final static int DELETE = 2;
+    public final static int VIEW_CASE = 0;
+    public final static int UPDATE_CASE = 1;
+    public final static int DELETE_CASE = 2;
     public final static String[] OPTIONS = {"View", "Edit", "Delete"};
 
+    public final static String VIEW = "VIEW";
+    public final static String UPDATE = "UPDATE";
+    public final static String DELETE = "DELETE";
 
     //start activity for result codes
     public static final int CODE_TO_ADD_STUDENT = 12;
