@@ -5,11 +5,17 @@
 
 package com.example.studentmanagementsystem.activity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -20,11 +26,24 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 import com.example.studentmanagementsystem.R;
+import com.example.studentmanagementsystem.backgroundDbHandler.BackgroundAsyncTask;
+import com.example.studentmanagementsystem.backgroundDbHandler.BackgroundIntentService;
+import com.example.studentmanagementsystem.backgroundDbHandler.BackgroundService;
 import com.example.studentmanagementsystem.database.DatabaseHelper;
 import com.example.studentmanagementsystem.model.Student;
 
+import static com.example.studentmanagementsystem.util.Constants.ADDED;
+import static com.example.studentmanagementsystem.util.Constants.ADDED_STUDENT;
+import static com.example.studentmanagementsystem.util.Constants.FILTER_ACTION_KEY;
+import static com.example.studentmanagementsystem.util.Constants.SAVING_OPTIONS;
+import static com.example.studentmanagementsystem.util.Constants.UPDATE;
+import static com.example.studentmanagementsystem.util.Constants.UPDATED_STUDENT;
+import static com.example.studentmanagementsystem.util.Constants.USE_ASYNC_TASK;
+import static com.example.studentmanagementsystem.util.Constants.USE_INTENT_SERVICE;
+import static com.example.studentmanagementsystem.util.Constants.USE_SERVICE;
 import static com.example.studentmanagementsystem.util.Constants.VALID_NAME;
 import static com.example.studentmanagementsystem.util.Constants.VALID_ROLL_NO;
+import static com.example.studentmanagementsystem.util.Constants.VIEW;
 
 public class AddStudentActivity extends AppCompatActivity {
 
@@ -32,7 +51,10 @@ public class AddStudentActivity extends AppCompatActivity {
     EditText editTextName, editTextRollNo;
     ArrayList<Student> listHoldStudent;
     DatabaseHelper databaseHelper;
-
+    AlertDialog.Builder dialog;
+    MyBroadcastReceiver myBroadcastReceiver;
+    IntentFilter intentFilter;
+    AlertDialog mAlert;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -45,8 +67,8 @@ public class AddStudentActivity extends AppCompatActivity {
 
         databaseHelper = new DatabaseHelper(this);
 
-        if (getIntent().hasExtra("VIEW")) {
-            Student stu = getIntent().getParcelableExtra("VIEW");
+        if (getIntent().hasExtra(VIEW)) {
+            Student stu = getIntent().getParcelableExtra(VIEW);
 
             editTextName.setText(stu.getStudentName());
             editTextRollNo.setText(stu.getRollNo());
@@ -62,8 +84,8 @@ public class AddStudentActivity extends AppCompatActivity {
 
             buttonAddStudent.setVisibility(View.GONE);
 
-        } else if (getIntent().hasExtra("UPDATE")) {
-            Student stu = getIntent().getParcelableExtra("UPDATE");
+        } else if (getIntent().hasExtra(UPDATE)) {
+            Student stu = getIntent().getParcelableExtra(UPDATE);
 
             editTextName.setEnabled(true);
             editTextRollNo.setEnabled(true);
@@ -103,44 +125,103 @@ public class AddStudentActivity extends AppCompatActivity {
                     editTextRollNo.setError("Roll No. already exists");
                 }
             }
-        } else
-            {
+        } else {
             Intent returnIntent = getIntent();
-            if (returnIntent.hasExtra("UPDATE")) {
-                Student stu = returnIntent.getParcelableExtra("UPDATE");
-                int oldRollNo = Integer.parseInt(stu.getRollNo());
-                if (!databaseHelper.rollNoExistsEdit(Integer.parseInt(String.valueOf(rollNo)),oldRollNo))
-                {
-                    stu.setRollNo(rollNo);
-                    stu.setStudentName(name);
-                    databaseHelper.updateStudentInDB(stu,oldRollNo);
-                    returnIntent.putExtra("UPDATED_STUDENT", stu);
+            if (returnIntent.hasExtra(UPDATE)) {
+                Student studentToUpdate = returnIntent.getParcelableExtra(UPDATE);
+                int oldRollNo = Integer.parseInt(studentToUpdate.getRollNo());
+                if (!databaseHelper.rollNoExistsEdit(Integer.parseInt(String.valueOf(rollNo)), oldRollNo)) {
+                    studentToUpdate.setRollNo(rollNo);
+                    studentToUpdate.setStudentName(name);
+                    generateDialog(studentToUpdate, "Update",oldRollNo);
+                    returnIntent.putExtra(UPDATED_STUDENT, studentToUpdate);
                     setResult(RESULT_OK, returnIntent);
-                    Toast.makeText(this, "Student Updated", Toast.LENGTH_SHORT).show();
-                    finish();
-                }
-                else{
+                } else {
                     editTextRollNo.setError("Roll No already Exists");
                     editTextRollNo.requestFocus();
                 }
 
-
-            } else if (returnIntent.hasExtra("ADDED")) {
-                if (!databaseHelper.rollNoExistsAdd(Integer.parseInt(String.valueOf(rollNo))))
-                {
-                    Student stu = new Student(rollNo, name);
-                    databaseHelper.addStudentToDB(stu);
-                    returnIntent.putExtra("ADDED_STUDENT", stu);
-                    setResult(RESULT_OK, returnIntent);
-                    Toast.makeText(this, "Student Added", Toast.LENGTH_SHORT).show();
-                    finish();
-                }
-                else {
-                    editTextRollNo.setError("Roll No already Exists");
-                    editTextRollNo.requestFocus();
-                }
+            } else if (returnIntent.hasExtra(ADDED)) {
+                 if (!databaseHelper.rollNoExistsAdd(Integer.parseInt(String.valueOf(rollNo)))) {
+                        Student studentToAdd = new Student(rollNo, name);
+                        generateDialog(studentToAdd, "Add", 0);
+                        returnIntent.putExtra(ADDED_STUDENT, studentToAdd);
+                        setResult(RESULT_OK, returnIntent);
+                    } else {
+                        editTextRollNo.setError("Roll No already Exists");
+                        editTextRollNo.requestFocus();
+                    }
             }
         }
     }
 
+    private void generateDialog(final Student studentToHandle, final String operationOnStudent, final int oldIdOfStudent) {
+        //Alert Dialog that has context of this activity.
+        dialog = new AlertDialog.Builder(AddStudentActivity.this);
+        dialog.setTitle("Save Using :");
+        //Sets the items of the Dialog.
+        dialog.setItems(SAVING_OPTIONS, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which) {
+                    case USE_SERVICE:
+                        Intent intentForService = new Intent(AddStudentActivity.this,
+                                BackgroundService.class);
+                        intentForService.putExtra("studentForDb", studentToHandle);
+                        intentForService.putExtra("operation", operationOnStudent);
+                        intentForService.putExtra("oldIdOfStudent", oldIdOfStudent);
+                        startService(intentForService);
+                        finish();
+                        break;
+                    case USE_INTENT_SERVICE:
+                        Intent intentForIntentService = new Intent(AddStudentActivity.this,
+                                BackgroundIntentService.class);
+                        intentForIntentService.putExtra("studentForDb", studentToHandle);
+                        intentForIntentService.putExtra("operation", operationOnStudent);
+                        intentForIntentService.putExtra("oldIdOfStudent", oldIdOfStudent);
+                        startService(intentForIntentService);
+                        finish();
+                        break;
+                    case USE_ASYNC_TASK:
+                        BackgroundAsyncTask backgroundAsyncTasks = new BackgroundAsyncTask(AddStudentActivity.this);
+                        backgroundAsyncTasks.execute(studentToHandle, operationOnStudent, oldIdOfStudent);
+                        finish();
+                        break;
+                }
+            }
+        });
+        mAlert = dialog.create();
+        mAlert.show();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        setReceiver();
+    }
+
+    @Override
+    protected void onStop() {
+        LocalBroadcastManager.getInstance(AddStudentActivity.this).unregisterReceiver(myBroadcastReceiver);
+        super.onStop();
+    }
+
+    private class MyBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(FILTER_ACTION_KEY))
+            {
+                mAlert.dismiss();
+                finish();
+            }
+        }
+    }
+
+    private void setReceiver()
+    {
+        myBroadcastReceiver = new MyBroadcastReceiver();
+        intentFilter = new IntentFilter();
+        intentFilter.addAction(FILTER_ACTION_KEY);
+        LocalBroadcastManager.getInstance(AddStudentActivity.this).registerReceiver(myBroadcastReceiver,intentFilter);
+    }
 }
