@@ -6,6 +6,7 @@
 package com.example.studentmanagementsystem.activity;
 
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -14,9 +15,11 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.example.studentmanagementsystem.R;
+import com.example.studentmanagementsystem.fragment.ViewStudentFragment;
 import com.example.studentmanagementsystem.model.Student;
+import com.example.studentmanagementsystem.util.CommunicationFragments;
 
-public class ViewStudentActivity extends AppCompatActivity {
+public class ViewStudentActivity extends AppCompatActivity implements CommunicationFragments {
 
     private Button buttonAddStudent;
     private EditText editTextName, editTextRollNo;
@@ -25,6 +28,10 @@ public class ViewStudentActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_view_student);
+
+
+
+
         buttonAddStudent = findViewById(R.id.saveButton);
         editTextName = findViewById(R.id.nameEditText);
         editTextRollNo = findViewById(R.id.rollNoEditText);
@@ -49,6 +56,11 @@ public class ViewStudentActivity extends AppCompatActivity {
             buttonAddStudent.setVisibility(View.GONE);
 
         }
+    }
+
+    @Override
+    public void communication(Bundle bundle) {
+
     }
 }
 

@@ -1,76 +1,97 @@
 package com.example.studentmanagementsystem.activity;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
-import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
-import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.Switch;
-import android.widget.Toast;
+import android.util.Log;
 
 import com.example.studentmanagementsystem.R;
-import com.example.studentmanagementsystem.adapter.mPagerAdapter;
+import com.example.studentmanagementsystem.adapter.PagerAdapter;
 import com.example.studentmanagementsystem.database.DatabaseHelper;
-import com.example.studentmanagementsystem.fragment.AddStudentFragment;
+import com.example.studentmanagementsystem.fragment.ViewStudentFragment;
 import com.example.studentmanagementsystem.fragment.StudentListFragment;
 import com.example.studentmanagementsystem.model.Student;
-import com.example.studentmanagementsystem.adapter.RecyclerViewAdapter;
-import com.example.studentmanagementsystem.util.CustomComparator;
+import com.example.studentmanagementsystem.util.CommunicationFragments;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import static com.example.studentmanagementsystem.util.Constants.ADD_STUDENT_CODE;
-import static com.example.studentmanagementsystem.util.Constants.CODE_TO_ADD_STUDENT;
-import static com.example.studentmanagementsystem.util.Constants.CODE_TO_UPDATE_STUDENT;
-import static com.example.studentmanagementsystem.util.Constants.CODE_TO_VIEW_STUDENT;
-import static com.example.studentmanagementsystem.util.Constants.DELETE;
-import static com.example.studentmanagementsystem.util.Constants.OPTIONS;
 import static com.example.studentmanagementsystem.util.Constants.SHOW_STUDENT_CODE;
-import static com.example.studentmanagementsystem.util.Constants.UPDATE;
-import static com.example.studentmanagementsystem.util.Constants.VIEW;
 
-public class
-ShowStudentListActivity extends AppCompatActivity implements StudentListFragment {
+public class ShowStudentListActivity extends AppCompatActivity implements CommunicationFragments {
 
     // private RecyclerViewAdapter recyclerViewAdapter;
     private ArrayList<Student> studentArrayList;
-    private int thisPosition;
+    private TabLayout tabLayout;
     private ViewPager mViewPager;
-    Button btnAdd;
     protected DatabaseHelper databaseHelper;
+    PagerAdapter mPagerAdapter;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    @Override //done
+    public void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_student_list);
 
-        databaseHelper = new DatabaseHelper(this);
-
-        studentArrayList = new ArrayList<>();
-
-        btnAdd = findViewById(R.id.addButton);
-
-        TabLayout tabLayout = findViewById(R.id.tab_layout_show_student);
         mViewPager = findViewById(R.id.view_pager_show_student);
+        mViewPager.setAdapter(new PagerAdapter(getSupportFragmentManager()));
+
+        tabLayout = findViewById(R.id.tab_layout_show_student);
         tabLayout.setupWithViewPager(mViewPager);
-        mViewPager.setAdapter(new mPagerAdapter(getSupportFragmentManager()));
+    }
+
+    public void onChangeTab() {
+        Log.d("aaaaaa", "position: " );
+        if (mViewPager.getCurrentItem() == 0) {
+
+            Log.d("aaaaaa", "1 chla");
+            mViewPager.setCurrentItem(1);
+        }
+
+        else if (mViewPager.getCurrentItem() == 1) {
+
+            Log.d("aaaaaa", "2 chla");
+            mViewPager.setCurrentItem(0);
+        }
+    }
+
+    //DEKHNA
+    public ArrayList<Student> onRefreshStudentList() {
+        studentArrayList = databaseHelper.getStudentsFromDB();
+        return studentArrayList;
+    }
+
+    //DEKHNA
+    public void /*<---boolean*/ onStudentdelete(Student student) {
+    }
+
+    //DEKHNA
+    public void onEditData(Intent intent) {
+
+//        String tag = "android:switcher:" + R.id.view_pager_show_student + ":" + ADD_STUDENT_CODE;
+//        ViewStudentFragment addStudentFragment = (ViewStudentFragment) getSupportFragmentManager().findFragmentByTag(tag);
+//        if (addStudentFragment != null) {
+//            addStudentFragment.onStudentEdit(intent);
+//        }
+
+    }
+
+    public void onAddData(Intent intent) {
+        String tag = "android:switcher:" + R.id.view_pager_show_student + ":" + ADD_STUDENT_CODE;
+        ViewStudentFragment viewStudentFragment = (ViewStudentFragment) getSupportFragmentManager().findFragmentByTag(tag);
+//        if (viewStudentFragment != null) {
+//            viewStudentFragment.onStudentAdd(intent);
+//        }
+    }
+
+    @Override
+    public void communication(Bundle bundle) {
+
+    }
+}
 
         /*
         rvStudent = findViewById(R.id.studentlist);
@@ -147,46 +168,6 @@ ShowStudentListActivity extends AppCompatActivity implements StudentListFragment
         });
         */
 
-
-    }
-
-    public ArrayList<Student> onRefreshStudentList() {
-        studentArrayList = databaseHelper.getStudentsFromDB();
-        return studentArrayList;
-    }
-
-    public boolean onStudentdelete(Student student) {
-
-    }
-
-    public void onChangeTab() {
-
-        if (mViewPager.getCurrentItem() == SHOW_STUDENT_CODE) {
-            mViewPager.setCurrentItem(ADD_STUDENT_CODE);
-        } else {
-            mViewPager.setCurrentItem(SHOW_STUDENT_CODE);
-        }
-    }
-
-    public void onEditData(Intent intent) {
-
-        String tag = "android:switcher:" + R.id.view_pager_show_student + ":" + ADD_STUDENT_CODE;
-        AddStudentFragment addStudentFragment = (AddStudentFragment) getSupportFragmentManager().findFragmentByTag(tag);
-        if (addStudentFragment != null) {
-            addStudentFragment.onStudentEdit(intent);
-        }
-
-    }
-
-    public void onAddData(Intent intent) {
-        String tag = "android:switcher:" + R.id.view_pager_show_student + ":" + ADD_STUDENT_CODE;
-        AddStudentFragment addStudentFragment = (AddStudentFragment) getSupportFragmentManager().findFragmentByTag(tag);
-        if (addStudentFragment != null) {
-            addStudentFragment.onStudentAdd(intent);
-        }
-    }
-
-}
 
 //////////////////////TO BE DONE IN FRAGMENT NOW //////////////////////////////////////////
 /*

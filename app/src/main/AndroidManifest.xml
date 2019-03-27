@@ -28,8 +28,6 @@
 
         <activity android:name=".activity.ViewStudentActivity" />
 
-        <receiver android:name=".communication.MyBroadcastReceiver"/>
-
     </application>
 
 </manifest>
