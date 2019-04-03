@@ -5,23 +5,23 @@ import android.os.Parcelable;
 
 public class Student implements Parcelable {
     //params
-    private String rollNo;
+    private int rollNo;
     private String studentName;
 
     //Constructor 1
-    public Student(String rollNo, String studentName) {
+    public Student(int rollNo, String studentName) {
         this.rollNo = rollNo;
         this.studentName = studentName;
     }
 
     // Constructor 2 (Parcelable)
     protected Student(Parcel in) {
-        rollNo = in.readString();
+        rollNo = in.readInt();
         studentName = in.readString();
     }
 
     //Setter and getter
-    public void setRollNo(String rollNo) {
+    public void setRollNo(int rollNo) {
         this.rollNo = rollNo;
     }
 
@@ -29,7 +29,7 @@ public class Student implements Parcelable {
         this.studentName = studentName;
     }
 
-    public String getRollNo() {
+    public int getRollNo() {
         return rollNo;
     }
 
@@ -57,7 +57,7 @@ public class Student implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(rollNo);
+        dest.writeInt(rollNo);
         dest.writeString(studentName);
     }
 }

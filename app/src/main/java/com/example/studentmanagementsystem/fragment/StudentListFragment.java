@@ -5,30 +5,36 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import com.example.studentmanagementsystem.R;
-import com.example.studentmanagementsystem.activity.ShowStudentListActivity;
 import com.example.studentmanagementsystem.activity.ViewStudentActivity;
 import com.example.studentmanagementsystem.adapter.RecyclerViewAdapter;
 import com.example.studentmanagementsystem.database.DatabaseHelper;
 import com.example.studentmanagementsystem.model.Student;
 import com.example.studentmanagementsystem.util.CommunicationFragments;
+import com.example.studentmanagementsystem.util.CustomComparator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
-import static com.example.studentmanagementsystem.util.Constants.DELETE;
+import static com.example.studentmanagementsystem.util.Constants.ADD_STUDENT;
 import static com.example.studentmanagementsystem.util.Constants.DELETE_CASE;
 import static com.example.studentmanagementsystem.util.Constants.OPTIONS;
-import static com.example.studentmanagementsystem.util.Constants.UPDATE;
 import static com.example.studentmanagementsystem.util.Constants.UPDATE_CASE;
 import static com.example.studentmanagementsystem.util.Constants.VIEW;
 import static com.example.studentmanagementsystem.util.Constants.VIEW_CASE;
@@ -42,7 +48,8 @@ public class StudentListFragment extends Fragment implements RecyclerViewAdapter
     private ArrayList<Student> studentArrayList;
     private Button btnAdd;
     private int thisPosition;
-    protected DatabaseHelper databaseHelper;
+    private DatabaseHelper databaseHelper;
+    private String mode = ADD_STUDENT;
 
     public StudentListFragment() {
         // Required empty public constructor
@@ -62,35 +69,41 @@ public class StudentListFragment extends Fragment implements RecyclerViewAdapter
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
         studentArrayList = new ArrayList<>();
 
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_show_student_list, container, false);
 
         //populate recycler view
         rvStudent = view.findViewById(R.id.rv_student_list);
         databaseHelper = new DatabaseHelper(mContext);
+        init(view);
+        handleRecyclerClick();
+        return view;
+
+    }
+
+    private void init(View view) {
         studentArrayList = databaseHelper.getStudentsFromDB();
+        rvStudent = view.findViewById(R.id.rv_student_list);
         recyclerViewAdapter = new RecyclerViewAdapter(this.studentArrayList);
         rvStudent.setLayoutManager(new LinearLayoutManager(mContext));
         rvStudent.setAdapter(recyclerViewAdapter);
         recyclerViewAdapter.notifyDataSetChanged();
 
-        //add button on activity will change tab
         btnAdd = view.findViewById(R.id.addButton);
         btnAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Bundle bundle = new Bundle();
                 bundle.putParcelableArrayList("student Array list",studentArrayList);
-                bundle.putString("Add","Add");
-                communicationFragmentsListener.communicateAdd(bundle);
+                bundle.putString("operationOnStudent","Add");
+                communicationFragmentsListener.communicateUpdate(bundle);
             }
         });
+        setHasOptionsMenu(true);
         handleRecyclerClick();
-        return view;
-
     }
 
     public void handleRecyclerClick() {
@@ -107,7 +120,6 @@ public class StudentListFragment extends Fragment implements RecyclerViewAdapter
                         setThisPosition(position);
 
                         switch (which) {
-                            //VIEW_CASE CASE
                             case VIEW_CASE:
                                 Intent intentView = new Intent(mContext, ViewStudentActivity.class);
                                 intentView.putExtra(VIEW, stu);
@@ -115,15 +127,13 @@ public class StudentListFragment extends Fragment implements RecyclerViewAdapter
                                 startActivity(intentView);
                                 break;
 
-                            //UPDATE_CASE CASE
                             case UPDATE_CASE:
                                 Bundle bundle = new Bundle();
                                 bundle.putParcelable("Student",stu);
-                                bundle.putString("Update", "Update");
+                                bundle.putString("operationOnStudent", "Update");
                                 communicationFragmentsListener.communicateUpdate(bundle);
                                 break;
 
-                            //DELETE CASE
                             case DELETE_CASE:
                                 final AlertDialog.Builder deleteDialog = new AlertDialog.Builder(mContext);
                                 deleteDialog.setMessage("Do you want to delete info of this student ?");
@@ -152,6 +162,29 @@ public class StudentListFragment extends Fragment implements RecyclerViewAdapter
 
             }
         });
+    }
+
+
+
+    public void addStudent(Bundle bundle) {
+
+        //Add new student.
+        if(bundle.getString("operationOnStudent").equals("Add")) {
+
+            Student student = bundle.getParcelable("Student");
+            studentArrayList.add(student);
+            recyclerViewAdapter.notifyDataSetChanged();
+
+            //Update old student.
+        }else if(bundle.getString("operationOnStudent").equals("Update")){
+
+            Student newStudent = bundle.getParcelable("Student");
+            Student oldStudent=studentArrayList.get(getThisPosition());
+            studentArrayList.add(newStudent);
+            studentArrayList.remove(oldStudent);
+            recyclerViewAdapter.notifyDataSetChanged();
+        }
+
     }
 
     @Override
@@ -185,65 +218,54 @@ public class StudentListFragment extends Fragment implements RecyclerViewAdapter
     }
 
 
-    public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
 
-        /**
-         * Method delete student from the database
-         *
-         * @param student
-         * @return true is successfully deleted
-         */
-        boolean onStudentDelete(Student student);
+        menuInflater.inflate(R.menu.action_menu, menu);
 
-        /**
-         * Method fetches data from the database and pass them in the adapter
-         *
-         * @return List of students from database
-         */
-        ArrayList<Student> onRefreshStudentList();
+        MenuItem switchItem = menu.findItem(R.id.switchItem);
+        MenuItem sortByNameItem = menu.findItem(R.id.sortByName);
+        MenuItem sortByRollNoItem = menu.findItem(R.id.sortByRollNo);
 
-        /**
-         * Method change the fragment to another fragment and call method in that fragment
-         * used for communication in fragments to pass editData
-         *
-         * @param intent
-         */
-        void onEditData(Intent intent);
+        //SORT BY NAME
+        sortByNameItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Collections.sort(studentArrayList, new CustomComparator.SortByName());
+                recyclerViewAdapter.notifyDataSetChanged();
+                Toast.makeText(mContext, "Sorted by Name", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
 
-        /**
-         * Method change the fragment to another fragment and call method in that fragment
-         * used for communication in fragments to pass addData
-         *
-         * @param intent
-         */
-        void onAddData(Intent intent);
+        //SORT BY ROLL NO
+        sortByRollNoItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Collections.sort(studentArrayList, new CustomComparator.SortByRollNo());
+                recyclerViewAdapter.notifyDataSetChanged();
+                Toast.makeText(mContext, "Sorted by RollNo", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
+
+        //LAYOUT CHANGING
+        switchItem.setActionView(R.layout.switch_layout);
+        Switch switchLayout = menu.findItem(R.id.switchItem).getActionView().findViewById(R.id.menuSwitch);
+        switchLayout.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    rvStudent.setLayoutManager(new GridLayoutManager(mContext, 2));
+                } else {
+                    rvStudent.setLayoutManager(new LinearLayoutManager(mContext));
+                }
+            }
+        });
+        super.onCreateOptionsMenu(menu,menuInflater);
     }
+
 }
-
-
-
-//    private void sortByName() {
-//        Collections.sort(studentArrayList, new Comparator<Student>() {
-//            @Override
-//            public int compare(Student o1, Student o2) {
-//                return o1.getStudentName().compareToIgnoreCase(o2.getStudentName());
-//            }
-//        });
-//        recyclerViewAdapter.notifyDataSetChanged();
-//
-//    }
-//
-//    public void sortByRollNo() {
-//        Collections.sort(studentArrayList, new Comparator<Student>() {
-//            @Override
-//            public int compare(Student o1, Student o2) {
-//                return (Integer.parseInt(String.valueOf(o1.getRollNo()))) - (Integer.parseInt(String.valueOf(o2.getRollNo())));
-//            }
-//        });
-//        recyclerViewAdapter.notifyDataSetChanged();
-//    }
-//
 
 
 

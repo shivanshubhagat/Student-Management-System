@@ -3,59 +3,53 @@ package com.example.studentmanagementsystem.fragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 
 import com.example.studentmanagementsystem.R;
-import com.example.studentmanagementsystem.adapter.RecyclerViewAdapter;
 import com.example.studentmanagementsystem.backgroundDbHandler.BackgroundAsyncTask;
 import com.example.studentmanagementsystem.backgroundDbHandler.BackgroundIntentService;
 import com.example.studentmanagementsystem.backgroundDbHandler.BackgroundService;
 import com.example.studentmanagementsystem.database.DatabaseHelper;
 import com.example.studentmanagementsystem.model.Student;
 import com.example.studentmanagementsystem.util.CommunicationFragments;
-import com.example.studentmanagementsystem.util.Constants;
 import com.example.studentmanagementsystem.util.ValidUtil;
 
 import java.util.ArrayList;
 
+import static com.example.studentmanagementsystem.util.Constants.ADD_STUDENT;
+import static com.example.studentmanagementsystem.util.Constants.SAVING_OPTIONS;
+import static com.example.studentmanagementsystem.util.Constants.UPDATE_STUDENT;
 import static com.example.studentmanagementsystem.util.Constants.USE_ASYNC_TASK;
 import static com.example.studentmanagementsystem.util.Constants.USE_INTENT_SERVICE;
 import static com.example.studentmanagementsystem.util.Constants.USE_SERVICE;
 
-public class ViewStudentFragment extends Fragment implements CommunicationFragments {
+public class ViewStudentFragment extends Fragment {
 
-    Context mContext;
-    DatabaseHelper databaseHelper;
-    View view;
-    Button btnAdd;
+    private Context mContext;
+    private DatabaseHelper databaseHelper;
+    private View view;
+    private Button btnAdd;
     private EditText editTextName, editTextRollNo;
     private boolean errorHandling;
     private int selectButtonOperation = 2;
     private ArrayList<Student> studentList = new ArrayList<>();
-    private Bundle bundle;
-    public final static String[] ITEM_DAILOG = {"AsyncTask", "Service", "Intent Service"};
+    private Bundle bundle = new Bundle();
     private int select;
     private CommunicationFragments mListener;
-    private StudentListFragment.OnFragmentInteractionListener onFragmentInteractionListener;
-
-
-
-
+    private String mode = ADD_STUDENT;
+    private  int oldIdOfStudent;
     public ViewStudentFragment() {
         // Required empty public constructor
     }
-
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -63,17 +57,20 @@ public class ViewStudentFragment extends Fragment implements CommunicationFragme
         mContext = getActivity();
     }
 
+    private void initValues() {
+        editTextName = view.findViewById(R.id.nameEditText);
+        editTextRollNo = view.findViewById(R.id.rollNoEditText);
+        btnAdd = view.findViewById(R.id.saveButton);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_view_student, container, false);
         databaseHelper = new DatabaseHelper(mContext);
 
         initValues();
 
-        //set click listener to button
         btnAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -88,93 +85,75 @@ public class ViewStudentFragment extends Fragment implements CommunicationFragme
                 }
             }
         });
-
         return view;
+    }
+
+    private void editButtonOnClick() {
+        Bundle bundle = new Bundle();
+        String name = editTextName.getText().toString().trim();
+        String roll = editTextRollNo.getText().toString();
+        errorHandling = true;
+        if (!ValidUtil.isValidName(name)) {
+            editTextName.requestFocus();
+            editTextName.setError("Invalid Name");
+            errorHandling = false;
+        }
+        else if (errorHandling) {
+            Student student = new Student(Integer.parseInt(roll), name);
+            bundle.putString("Update", "Update");
+            bundle.putParcelable("Student", student);
+            generateAlertDialog(student, "Update", oldIdOfStudent);
+            editTextRollNo.setEnabled(true);
+            editTextName.setEnabled(true);
+        }
     }
 
     private void addButtonOnClick() {
         String name = editTextName.getText().toString().trim();
-        String rollNo = editTextRollNo.getText().toString().trim();
+        String rollNo = editTextRollNo.getText().toString();
+        errorHandling = true;
 
         // validation for name check used set error to edit text
         if (!ValidUtil.isValidName(name)) {
+            editTextName.requestFocus();
             editTextName.setError("Invalid Name");
             errorHandling = false;
         }
 
         // validation for Roll No check used set error to edit text
         if (!ValidUtil.isValidId(rollNo)) {
+            editTextRollNo.requestFocus();
             editTextRollNo.setError("Invalid Roll No");
             errorHandling = false;
         }
-        //check duplicte Roll No
-        else if (ValidUtil.isCheckValidId(studentList, rollNo)) {
+        //check duplicate Roll No
+        else if (!ValidUtil.isUniqueRollNo(studentList, Integer.parseInt(rollNo))) {
+            editTextRollNo.requestFocus();
             editTextRollNo.setError("Roll No already exists");
             errorHandling = false;
         }
-        //check if error is present or not
-        if (errorHandling) {
-            Student student = new Student(rollNo,name);
-            bundle.putParcelable("Student", student);
-            generateAlertDialog(student, "Added",null);
+        else{
+            if (errorHandling) {
+                Student student = new Student(Integer.parseInt(rollNo), name);
+                bundle.putParcelable("Student", student);
+                generateAlertDialog(student, "Add", 0);
+                editTextRollNo.setEnabled(true);
+                editTextName.setEnabled(true);
+            }
         }
     }
 
-    public void viewStudent(Student student){
-        editTextName.setText(student.getStudentName());
-        editTextRollNo.setText(student.getRollNo());
+    private void generateAlertDialog(final Student studentToHandle, final String operationOnStudent, final int oldIdOfStudent) {
         editTextRollNo.setEnabled(false);
         editTextName.setEnabled(false);
-        btnAdd.setVisibility(View.GONE);
-    }
-
-    public void updateStudent(Bundle bundle){
-
-        if(bundle.getString("Update").equals("Update")) {
-
-            Student student = bundle.getParcelable("Student");
-            String oldIdOfStudent = student.getRollNo();
-            editTextName.setText(student.getStudentName());
-            editTextRollNo.setText(student.getRollNo());
-
-            editMode(oldIdOfStudent,student);
-
-        }else if(bundle.getString("Add").equals("Add")){
-            studentList=bundle.getParcelableArrayList("student Array list");
-            addButtonOnClick();
-        }
-    }
-
-    public void editMode(String oldIdOfStudent, Student student) {
-        final String oldRollNo = oldIdOfStudent;
-        getActivity().setTitle("Edit Student");
-
-        btnAdd.findViewById(R.id.addButton);
-        btnAdd.setText("Update Student");
-        //to return name and roll number through bundle to StudentList Fragment and update data using preferred operation
-        btnAdd.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Bundle bundle= new Bundle();
-                String name = editTextName.getText().toString().trim();
-                String roll = editTextRollNo.getText().toString().trim();
-                Student student = new Student(name,roll);
-                bundle.putString("Update","Update");
-                bundle.putParcelable("Student",student);
-                generateAlertDialog(student,"Update",oldRollNo);
-            }
-        });
-    }
-
-    private void generateAlertDialog(final Student studentToHandle, final String operationOnStudent,final String oldIdOfStudent) {
         final AlertDialog.Builder mBuilder = new AlertDialog.Builder(mContext);
-        if (selectButtonOperation == 1)//edit
+        if (selectButtonOperation == 1)
             mBuilder.setTitle("Updated");
         else
             mBuilder.setTitle("Added");
 
         //setting SingleChoiceItem onClick
-        mBuilder.setSingleChoiceItems(ITEM_DAILOG, -1, new DialogInterface.OnClickListener() {
+        mBuilder.setSingleChoiceItems(SAVING_OPTIONS, -1, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
@@ -203,36 +182,68 @@ public class ViewStudentFragment extends Fragment implements CommunicationFragme
 
                     case USE_ASYNC_TASK:
                         BackgroundAsyncTask backgroundAsyncTasks = new BackgroundAsyncTask(mContext);
-                        backgroundAsyncTasks.execute(studentToHandle, operationOnStudent);
+                        backgroundAsyncTasks.execute(studentToHandle, operationOnStudent, 0);
                         break;
                 }
-                mListener.communicateUpdate(bundle);
+
+                Bundle bundle = new Bundle();
+                bundle.putParcelable("Student", studentToHandle);
+                bundle.putString("operationOnStudent", operationOnStudent);
+
+                mListener.communicateAdd(bundle);
             }
         });
         AlertDialog mDialog = mBuilder.create();
         mDialog.show();
     }
 
-    private void editButtonOnClick() {
-        String Name = editTextName.getText().toString().trim();
 
-        // validation for first name check used set error to edit text
-        if (!ValidUtil.isValidName(Name)) {
-            editTextName.setError("Invalid Name");
-            errorHandling = false;
-        }
+    public void viewMode(Student student) {
+        editTextName.setText(student.getStudentName());
+        editTextRollNo.setText(String.valueOf(student.getRollNo()));
+        editTextName.setEnabled(false);
+        editTextRollNo.setEnabled(false);
+        editTextName.setTextColor(Color.BLACK);
+        editTextRollNo.setTextColor(Color.BLACK);
+        getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        btnAdd.setVisibility(View.GONE);
+    }
 
-        //check if error is present or not
-        if (errorHandling) {
-            bundle.putString("Name", Name);
+    public void updateStudent(Bundle bundle) {
+        this.bundle = bundle;
+        mode=bundle.getString("operationOnStudent");
+        if (bundle.getString("operationOnStudent").equals("Update")) {
+
+            Student student= bundle.getParcelable("Student");
+            oldIdOfStudent = student.getRollNo();
+            editTextName.setText(student.getStudentName());
+            editTextRollNo.setText(String.valueOf(student.getRollNo()));
+            editTextRollNo.setTextColor(Color.BLACK);
+            editTextRollNo.setEnabled(false);
+            editTextName.setEnabled(true);
+            editTextName.requestFocus();
+            selectButtonOperation = 1;
+
+        } else if (bundle.getString("operationOnStudent").equals("Add")) {
+            editTextName.setEnabled(true);
+            editTextRollNo.setEnabled(true);
+            studentList = bundle.getParcelableArrayList("student Array list");
+            selectButtonOperation = 2;
         }
     }
 
 
-    private void initValues() {
-        editTextName = view.findViewById(R.id.nameEditText);
-        editTextRollNo = view.findViewById(R.id.rollNoEditText);
-        btnAdd = view.findViewById(R.id.saveButton);
+
+
+
+    public void clearText(Bundle bundle) {
+        if(!bundle.getString("operationOnStudent").equals(UPDATE_STUDENT))
+        {
+            editTextRollNo.setEnabled(true);
+            editTextRollNo.getText().clear();
+            editTextName.getText().clear();
+            selectButtonOperation=2;
+        }
     }
 
 
@@ -254,13 +265,4 @@ public class ViewStudentFragment extends Fragment implements CommunicationFragme
     }
 
 
-    @Override
-    public void communicateAdd(Bundle bundle) {
-
-    }
-
-    @Override
-    public void communicateUpdate(Bundle bundle) {
-
-    }
 }

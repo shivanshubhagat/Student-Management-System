@@ -14,27 +14,25 @@ import java.util.regex.Pattern;
  * @second for Validation Id
  */
 public final class ValidUtil {
-    private final static String NAME_REGEX="^[a-zA-Z]{3,25}$";
-    private final static String ID_REGEX="^[1-9][0-9]*$";
+    private final static String NAME_REGEX="\\b[a-zA-Z]+\\s[a-zA-Z]+\\b";
+    private final static String ROLL_NO_REGEX ="^([1-9][0-9]{0,2}|1000)$";
 
     public static boolean isValidName(final String NAME){
-
-        final Pattern pattern = Pattern.compile(NAME_REGEX);;
-
+        final Pattern pattern = Pattern.compile(NAME_REGEX);
         Matcher matcher = pattern.matcher(NAME);
-
-        return matcher.matches();
+        if(matcher.matches()){
+            return true;
+        }
+        return false;
     }
 
     public static boolean isValidId(final String ID){
-        // String regex="^[1-9][0-9]*$";
-        final Pattern pattern = Pattern.compile(ID_REGEX);;
-
-        Matcher matcher = pattern.matcher(ID);
-
+        final Pattern pattern = Pattern.compile(ROLL_NO_REGEX);
+        Matcher matcher = pattern.matcher(String.valueOf(ID));
         return (matcher.matches());
-
     }
+
+
 
     /**
      * This method used to check enter Roll No is duplicate or not
@@ -43,12 +41,12 @@ public final class ValidUtil {
      * @param rollNo of string type
      * @return true if Roll no is present false if not present
      */
-    public static boolean isCheckValidId(ArrayList<Student> sudentArrayList, final String rollNo){
-        for(Student validStudent:sudentArrayList){
-            if(validStudent.getRollNo().equals(rollNo)){
-                return true;
+    public static boolean isUniqueRollNo(ArrayList<Student> studentArrayList, final int rollNo){
+        for(Student validStudent:studentArrayList){
+            if(validStudent.getRollNo() == rollNo){
+                return false;
             }
         }
-        return false;
+        return true;
     }
 }

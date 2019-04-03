@@ -40,7 +40,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     @Override
     public void onBindViewHolder(@NonNull final studentViewHolder holder, final int position) {
         holder.name.setText(studentAdapterArrayList.get(position).getStudentName());
-        holder.rollNo.setText(studentAdapterArrayList.get(position).getRollNo());
+        holder.rollNo.setText(Integer.toString(studentAdapterArrayList.get(position).getRollNo()));
     }
 
     @Override

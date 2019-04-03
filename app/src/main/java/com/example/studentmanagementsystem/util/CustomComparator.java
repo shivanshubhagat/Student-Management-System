@@ -17,7 +17,9 @@ public class CustomComparator {
 
         @Override
         public int compare(Student o1, Student o2) {
-            return (o1.getRollNo().compareTo(o2.getRollNo()));
+           int r1 = o1.getRollNo();
+           int r2 = o2.getRollNo();
+           return r1 - r2;
         }
     }
 }
