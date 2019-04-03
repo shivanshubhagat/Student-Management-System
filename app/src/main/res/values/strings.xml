@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">SMS</string>
+    <string name="delete_message">Do you want to delete info of this student ?</string>
+    <string name="Yes">YES</string>
+    <string name="No">NO</string>
+    <string name="zero_length">Length can not be Zero</string>
+
 </resources>

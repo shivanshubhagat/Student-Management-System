@@ -47,14 +47,14 @@ import static com.example.studentmanagementsystem.util.Constants.VIEW;
 
 public class AddStudentActivity extends AppCompatActivity {
 
-    Button buttonAddStudent;
-    EditText editTextName, editTextRollNo;
-    ArrayList<Student> listHoldStudent;
-    DatabaseHelper databaseHelper;
-    AlertDialog.Builder dialog;
-    MyBroadcastReceiver myBroadcastReceiver;
-    IntentFilter intentFilter;
-    AlertDialog mAlert;
+    private Button buttonAddStudent;
+    private EditText editTextName, editTextRollNo;
+    private ArrayList<Student> listHoldStudent;
+    private DatabaseHelper databaseHelper;
+    private AlertDialog.Builder dialog;
+    private MyBroadcastReceiver myBroadcastReceiver;
+    private IntentFilter intentFilter;
+    private AlertDialog mAlert;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -103,7 +103,7 @@ public class AddStudentActivity extends AppCompatActivity {
         //Name cant be empty
         if (name.length() == 0) {
             editTextName.requestFocus();
-            editTextName.setError("Length can't be Zero");
+            editTextName.setError(getString(R.string.zero_length));
         }
         //two words Name
         else if (!name.matches(VALID_NAME)) {
@@ -171,7 +171,6 @@ public class AddStudentActivity extends AppCompatActivity {
                         intentForService.putExtra("operation", operationOnStudent);
                         intentForService.putExtra("oldIdOfStudent", oldIdOfStudent);
                         startService(intentForService);
-                        finish();
                         break;
                     case USE_INTENT_SERVICE:
                         Intent intentForIntentService = new Intent(AddStudentActivity.this,
@@ -180,12 +179,10 @@ public class AddStudentActivity extends AppCompatActivity {
                         intentForIntentService.putExtra("operation", operationOnStudent);
                         intentForIntentService.putExtra("oldIdOfStudent", oldIdOfStudent);
                         startService(intentForIntentService);
-                        finish();
                         break;
                     case USE_ASYNC_TASK:
                         BackgroundAsyncTask backgroundAsyncTasks = new BackgroundAsyncTask(AddStudentActivity.this);
                         backgroundAsyncTasks.execute(studentToHandle, operationOnStudent, oldIdOfStudent);
-                        finish();
                         break;
                 }
             }

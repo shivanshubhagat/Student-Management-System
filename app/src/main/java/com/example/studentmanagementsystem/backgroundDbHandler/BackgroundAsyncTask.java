@@ -17,7 +17,6 @@ public class BackgroundAsyncTask extends AsyncTask<Object,Void,Void> {
 
     @SuppressLint("StaticFieldLeak")
     private Context context;
-    private SQLiteDatabase db;
 
     public BackgroundAsyncTask(Context context) {
         this.context=context;
@@ -31,7 +30,7 @@ public class BackgroundAsyncTask extends AsyncTask<Object,Void,Void> {
         int oldIdOfStudent = (int) objects[2];
 
         DatabaseHelper dbHelper=new DatabaseHelper(context);
-        db=dbHelper.getWritableDatabase();
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         switch (operationOnStudent){
             case ADD_STUDENT:

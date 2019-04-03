@@ -128,8 +128,8 @@ public class ShowActivity extends AppCompatActivity {
                             //will make another dialog box to delete student with options yes or no
                             case DELETE_CASE:
                                 final android.app.AlertDialog.Builder deleteDialog = new android.app.AlertDialog.Builder(ShowActivity.this);
-                                deleteDialog.setMessage("Do you want to delete info of this student ?");
-                                deleteDialog.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                                deleteDialog.setMessage(R.string.delete_message);
+                                deleteDialog.setPositiveButton(R.string.Yes, new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         databaseHelper.deleteStudentFromDB(stu.getRollNo());
@@ -138,7 +138,7 @@ public class ShowActivity extends AppCompatActivity {
                                         Toast.makeText(ShowActivity.this,DELETE, Toast.LENGTH_SHORT).show();
                                     }
                                 });
-                                deleteDialog.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                                deleteDialog.setNegativeButton(R.string.No, new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         dialog.dismiss();
